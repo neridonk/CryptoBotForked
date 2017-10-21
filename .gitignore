@@ -1,4 +1,4 @@
-# Numerous always-ignore extensions
+﻿# Numerous always-ignore extensions
 *.diff
 *.err
 *.orig
@@ -37,7 +37,6 @@ dwsync.xml
 
 # Folders & files to ignore
 
-node_modules
 candles.csv
 cexio.db
 history

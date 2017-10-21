@@ -1,4 +1,4 @@
-// This config is used in both the
+﻿// This config is used in both the
 // frontend as well as the web server.
 
 // see https://github.com/askmike/gekko/blob/stable/docs/installing_gekko_on_a_server.md
@@ -10,9 +10,9 @@ const CONFIG = {
     port: 3000,
   },
   ui: {
-    ssl: true,
-    host: 'fgh-bbwf.1d35.starter-us-east-1.openshiftapps.com',
-    port: 443,
+    ssl: false,
+    host: '	http://asdasd-adasd.1d35.starter-us-east-1.openshiftapps.com',
+    port: 8080,
     path: '/'
   },
   adapter: 'sqlite'
