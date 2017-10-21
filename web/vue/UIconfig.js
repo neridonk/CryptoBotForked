@@ -11,8 +11,8 @@ const CONFIG = {
   },
   ui: {
     ssl: false,
-    host: 'http://asdasd-adasd.1d35.starter-us-east-1.openshiftapps.com',
-    port: 8080,
+    host: 'asdasd-adasd.1d35.starter-us-east-1.openshiftapps.com',
+    port: 443,
     path: '/'
   },
   adapter: 'sqlite'
