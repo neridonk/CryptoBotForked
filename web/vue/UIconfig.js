@@ -11,7 +11,7 @@ const CONFIG = {
   },
   ui: {
     ssl: false,
-    host: '	http://asdasd-adasd.1d35.starter-us-east-1.openshiftapps.com',
+    host: 'http://asdasd-adasd.1d35.starter-us-east-1.openshiftapps.com',
     port: 8080,
     path: '/'
   },
