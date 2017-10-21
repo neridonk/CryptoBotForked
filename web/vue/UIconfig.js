@@ -10,8 +10,8 @@ const CONFIG = {
     port: 3000,
   },
   ui: {
-    ssl: false,
-    host: 'http://fgh-bbwf.1d35.starter-us-east-1.openshiftapps.com',
+    ssl: true,
+    host: 'fgh-bbwf.1d35.starter-us-east-1.openshiftapps.com',
     port: 443,
     path: '/'
   },
