@@ -2,6 +2,8 @@
 // frontend as well as the web server.
 
 // see https://github.com/askmike/gekko/blob/stable/docs/installing_gekko_on_a_server.md
+var port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
+    ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
 
 const CONFIG = {
   headless: false,
@@ -11,8 +13,8 @@ const CONFIG = {
   },
   ui: {
     ssl: false,
-    host: 'asdasd-adasd.1d35.starter-us-east-1.openshiftapps.com',
-    port: 443,
+    host: ip,
+    port: port,
     path: '/'
   },
   adapter: 'sqlite'
