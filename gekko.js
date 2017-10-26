@@ -21,21 +21,13 @@
 */
 
 console.log(`
-    ______   ________  __    __  __    __   ______
-   /      \\ /        |/  |  /  |/  |  /  | /      \\
-  /$$$$$$  |$$$$$$$$/ $$ | /$$/ $$ | /$$/ /$$$$$$  |
-  $$ | _$$/ $$ |__    $$ |/$$/  $$ |/$$/  $$ |  $$ |
-  $$ |/    |$$    |   $$  $$<   $$  $$<   $$ |  $$ |
-  $$ |$$$$ |$$$$$/    $$$$$  \\  $$$$$  \\  $$ |  $$ |
-  $$ \\__$$ |$$ |_____ $$ |$$  \\ $$ |$$  \\ $$ \\__$$ |
-  $$    $$/ $$       |$$ | $$  |$$ | $$  |$$    $$/ 
-   $$$$$$/  $$$$$$$$/ $$/   $$/ $$/   $$/  $$$$$$/
+Starting 
 `);
 
 const util = require(__dirname + '/core/util');
 
-console.log('\tGekko v' + util.getVersion());
-console.log('\tI\'m gonna make you rich, Bud Fox.', '\n\n');
+console.log('\tRunning Server v' + util.getVersion());
+console.log('\t', '\n\n');
 
 const dirs = util.dirs();
 
