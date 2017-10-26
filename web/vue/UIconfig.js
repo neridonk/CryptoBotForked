@@ -11,7 +11,7 @@ const CONFIG = {
   },
   ui: {
     ssl: false,
-    host: 'v22017105055054583.bestsrv.de/sdfsfgdg',
+    host: 'v22017105055054583.bestsrv.de',
     port: 443,
     path: '/'
   },
