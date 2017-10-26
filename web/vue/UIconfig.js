@@ -10,9 +10,9 @@ const CONFIG = {
     port: 3000,
   },
   ui: {
-    ssl: false,
+    ssl: true,
     host: 'v22017105055054583.bestsrv.de',
-    port: 3000,
+    port: 443,
     path: '/'
   },
   adapter: 'sqlite'
