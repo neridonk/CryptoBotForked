@@ -1,278 +1,59 @@
-﻿/*
+﻿// required indicators
+var SMMA = require('./SMMA.js');
 
-  RSI - cykedev 14/02/2014
-
-  (updated a couple of times since, check git history)
-
- */
-// helpers
-var _ = require('lodash');
-var log = require('../core/log.js');
-
-var RSI = require('./indicators/RSI.js');
-var TSI = require('./indicators/TSI.js');
-// let's create our own method
-var method = {};
-var fatherOnLowPoint = false;
-// prepare everything our method needs
-method.init = function ()
+var Indicator = function (settings)
 {
-  this.name = 'RSI';
-
-  this.trend = {
-    direction: 'none',
-    duration: 0,
-    persisted: false,
-    adviced: false
-  };
-
-  this.trendFather = {
-    direction: 'none',
-    duration: 0,
-    persisted: false,
-    adviced: false
-  };
-
-
-  this.trendTSI = {
-    direction: 'none',
-    duration: 0,
-    persisted: false,
-    adviced: false
-  };
-
-
-  this.requiredHistory = this.tradingAdvisor.historySize;
-
-  // define the indicators we need
-  this.addIndicator('rsi', 'RSI', this.settings);
-  this.addIndicator('rsiFather', 'RSI', { interval: this.settings.interval + 2, low: this.settings.low + 3, high: this.settings.high - 5 });
-
-  // define the indicators we need
-  this.addIndicator('tsi', 'TSI', this.settings);
-
-  this.currentTrend;
-  // define the indicators we need
-  this.addIndicator('dema', 'DEMA', this.settings);
+  this.lastClose = null;
+  this.weight = settings.interval;
+  this.avgU = new SMMA(this.weight);
+  this.avgD = new SMMA(this.weight);
+  this.u = 0;
+  this.d = 0;
+  this.rs = 0;
+  this.result = 0;
+  this.age = 0;
 }
 
-// for debugging purposes log the last
-// calculated parameters.
-method.log = function (candle)
+Indicator.prototype.update = function (candle)
 {
-  var digits = 8;
-  var rsi = this.indicators.rsi;
+  var currentClose = candle.close;
 
-  log.debug('calculated RSI properties for candle:');
-  log.debug('\t', 'rsi:', rsi.result.toFixed(digits));
-  log.debug('\t', 'price:', candle.close.toFixed(digits));
-}
-
-method.check = function (candle)
-{
-  var rsi = this.indicators.rsi;
-  var rsiFather = this.indicators.rsiFather;
-  var rsiVal = rsi.result;
-  var rsiValFather = rsiFather.result;
-
-  // DEMA
-  var dema = this.indicators.dema;
-  var diff = dema.result;
-  var price = candle.close;
-
-  if (diff > this.settings.thresholds.up)
+  if (this.lastClose === null)
   {
-    if (this.currentTrend !== 'up')
-    {
-      this.currentTrend = 'up';
-    }
+    // Set initial price to prevent invalid change calculation
+    this.lastClose = currentClose;
 
-  } else if (diff < this.settings.thresholds.down)
-  {
-    if (this.currentTrend !== 'down')
-    {
-      this.currentTrend = 'down';
-    }
+    // Do not calculate RSI for this reason - there's no change!
+    this.age++;
+    return;
   }
 
-  //TSI
-  var tsi = this.indicators.tsi;
-  var tsiVal = tsi.tsi;
-
-  // TSI MAIN
-  if (tsiVal > this.settings.thresholds.highTSI)
+  if (currentClose > this.lastClose)
   {
-
-    // new trend detected
-    if (this.trendTSI.direction !== 'high')
-      this.trendTSI = {
-        duration: 0,
-        persisted: false,
-        direction: 'high',
-        adviced: false
-      };
-
-    this.trendTSI.duration++;
-
-
-    if (this.trendTSI.duration >= this.settings.thresholds.persistence)
-      this.trendTSI.persisted = true;
-
-    if (this.trendTSI.persisted && !this.trendTSI.adviced)// advice Sell / short
-    {
-      this.trendTSI.adviced = true;
-    }
-
-  } else if (tsiVal < this.settings.thresholds.low)
-  {
-
-    // new trend detected
-    if (this.trendTSI.direction !== 'low')
-      this.trendTSI = {
-        duration: 0,
-        persisted: false,
-        direction: 'low',
-        adviced: false
-      };
-
-    this.trendTSI.duration++;
-
-
-    if (this.trendTSI.duration >= this.settings.thresholds.persistence)
-      this.trendTSI.persisted = true;
-
-    if (this.trendTSI.persisted && !this.trendTSI.adviced)
-    {
-      this.trendTSI.adviced = true;
-    }
-
-  }
-
-
-
-
-  //RSI FATHER MAIN ----------------
-  if (rsiValFather > this.settings.thresholds.high)
-  {
-    // new trend detected
-    if (this.trendFather.direction !== 'high')
-      this.trendFather = {
-        duration: 0,
-        persisted: false,
-        direction: 'high',
-        adviced: false
-      };
-
-    this.trendFather.duration++;
-
-    log.debug('FATHER ...> high since', this.trendFather.duration, 'candle(s)');
-
-    if (this.trendFather.duration >= this.settings.thresholds.persistence)
-      this.trendFather.persisted = true;
-
-    if (this.trendFather.persisted && !this.trendFather.adviced)
-    {
-      this.trendFather.adviced = true;
-      this.fatherOnLowPoint = true;
-    }
-
-  } else if (rsiValFather < this.settings.thresholds.low)
-  {
-
-    // new trend detected
-    if (this.trendFather.direction !== 'low')
-      this.trendFather = {
-        duration: 0,
-        persisted: false,
-        direction: 'low',
-        adviced: false
-      };
-
-    this.trendFather.duration++;
-
-    log.debug('FATHER ---> IN low since', this.trendFather.duration, 'candle(s)');
-
-    if (this.trendFather.duration >= this.settings.thresholds.persistence)
-      this.trendFather.persisted = true;
-
-    if (this.trendFather.persisted && !this.trendFather.adviced)
-    {
-      this.trendFather.adviced = true;
-      this.fatherOnLowPoint = false;
-
-    }
+    this.u = currentClose - this.lastClose;
+    this.d = 0;
   } else
   {
-
-    log.debug('In no trend');
-
+    this.u = 0;
+    this.d = this.lastClose - currentClose;
   }
 
+  this.avgU.update(this.u);
+  this.avgD.update(this.d);
 
-  //RSI MAIN ----------------
-  if (rsiVal > this.settings.thresholds.high)
+  this.rs = this.avgU.result / this.avgD.result;
+  this.result = 100 - (100 / (1 + this.rs));
+
+  if (this.avgD.result === 0 && this.avgU.result !== 0)
   {
-
-    // new trend detected
-    if (this.trend.direction !== 'high')
-      this.trend = {
-        duration: 0,
-        persisted: false,
-        direction: 'high',
-        adviced: false
-      };
-
-    this.trend.duration++;
-
-    log.debug('In high since', this.trend.duration, 'candle(s)');
-
-    if (this.trend.duration >= this.settings.thresholds.persistence)
-      this.trend.persisted = true;
-
-    if (this.trend.persisted && !this.trend.adviced && this.trendFather.direction === 'high' && this.currentTrend === 'up')
-    {
-      this.trend.adviced = true;
-      this.advice('short');
-      log.debug('SELL AT ---------->');
-
-    } else
-      this.advice();
-
-  } else if (rsiVal < this.settings.thresholds.low)
+    this.result = 100;
+  } else if (this.avgD.result === 0)
   {
-
-    // new trend detected
-    if (this.trend.direction !== 'low')
-      this.trend = {
-        duration: 0,
-        persisted: false,
-        direction: 'low',
-        adviced: false
-      };
-
-    this.trend.duration++;
-
-    log.debug('In low since', this.trend.duration, 'candle(s)');
-
-    if (this.trend.duration >= this.settings.thresholds.persistence)
-      this.trend.persisted = true;
-
-    if (this.trend.persisted && !this.trend.adviced && this.trendFather.direction === 'low' && this.currentTrend === 'down')
-    {
-      this.trend.adviced = true;
-      this.advice('long');
-      log.debug('BUY AT ---------->');
-
-    } else
-      this.advice();
-
-  } else
-  {
-
-    log.debug('In no trend');
-
-    this.advice();
+    this.result = 0;
   }
+
+  this.lastClose = currentClose;
+  this.age++;
 }
 
-module.exports = method;
+module.exports = Indicator;
