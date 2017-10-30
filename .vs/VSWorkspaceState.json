@@ -1,6 +1,12 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\config",
+    "\\config\\strategies",
+    "\\strategies",
+    "\\strategies\\indicators",
+    "\\web"
   ],
+  "SelectedNode": "\\strategies\\StochRSI.js",
   "PreviewInSolutionExplorer": false
 }
