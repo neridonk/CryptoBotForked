@@ -6,7 +6,7 @@
   If you are interested in how Gekko works, read more about Gekko's 
   architecture here:
 
-  https://github.com/askmike/gekko/blob/stable/docs/internals/architecture.md
+  https://gekko.wizb.it/docs/internals/architecture.html
 
   Disclaimer:
 
@@ -21,13 +21,21 @@
 */
 
 console.log(`
-Starting 
+    ______   ________  __    __  __    __   ______
+   /      \\ /        |/  |  /  |/  |  /  | /      \\
+  /$$$$$$  |$$$$$$$$/ $$ | /$$/ $$ | /$$/ /$$$$$$  |
+  $$ | _$$/ $$ |__    $$ |/$$/  $$ |/$$/  $$ |  $$ |
+  $$ |/    |$$    |   $$  $$<   $$  $$<   $$ |  $$ |
+  $$ |$$$$ |$$$$$/    $$$$$  \\  $$$$$  \\  $$ |  $$ |
+  $$ \\__$$ |$$ |_____ $$ |$$  \\ $$ |$$  \\ $$ \\__$$ |
+  $$    $$/ $$       |$$ | $$  |$$ | $$  |$$    $$/ 
+   $$$$$$/  $$$$$$$$/ $$/   $$/ $$/   $$/  $$$$$$/
 `);
 
 const util = require(__dirname + '/core/util');
 
-console.log('\tRunning Server v' + util.getVersion());
-console.log('\t', '\n\n');
+console.log('\tGekko v' + util.getVersion());
+console.log('\tI\'m gonna make you rich, Bud Fox.', '\n\n');
 
 const dirs = util.dirs();
 

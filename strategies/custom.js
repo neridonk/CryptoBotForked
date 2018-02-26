@@ -1,202 +1,63 @@
-// helpers
-var _ = require('lodash');
-var log = require('../core/log.js');
+// This is a basic example strategy for Gekko.
+// For more information on everything please refer
+// to this document:
+//
+// https://gekko.wizb.it/docs/strategies/creating_a_strategy.html
+//
+// The example below is pretty bad investment advice: on every new candle there is
+// a 10% chance it will recommend to change your position (to either
+// long or short).
 
-//var config = require('../core/util.js').getConfig();
-//var settings = config.buyatsellat;
+var log = require('../core/log');
 
-// let's create our own method
-var method = {};
+// Let's create our own strat
+var strat = {};
 
-var boughtAt = 0;
-var RsiAdvice = 'bearish';
-var RSI = require('./indicators/RSI.js');
-
-var isDownTrended = false;
-var downTrendPrice = 0;
-
-// prepare everything our method needs
-method.init = function ()
-{
-  this.name = 'buyatsellat';
-
-  this.previousAction = 'sell';
-  this.previousActionPrice = 1200;
-
-  this.interval = this.settings.interval;
-
-  this.trend = {
-    direction: 'none',
-    duration: 0,
-    persisted: false,
-    adviced: false
-  };
-
-  this.requiredHistory = this.tradingAdvisor.historySize;
-
-  // define the indicators we need
-  this.addIndicator('rsi', 'RSI', { interval: this.interval });
-
-  this.RSIhistory = [];
-
+// Prepare everything our method needs
+strat.init = function() {
+  this.input = 'candle';
+  this.currentTrend = 'long';
+  this.requiredHistory = 0;
 }
 
 // What happens on every new candle?
-method.update = function (candle)
-{
-  this.rsi = this.indicators.rsi.rsi;
+strat.update = function(candle) {
 
-  this.RSIhistory.push(this.rsi);
+  // Get a random number between 0 and 1.
+  this.randomNumber = Math.random();
 
-  if (_.size(this.RSIhistory) > this.interval)
-    // remove oldest RSI value
-    this.RSIhistory.shift();
-
-  this.lowestRSI = _.min(this.RSIhistory);
-  this.highestRSI = _.max(this.RSIhistory);
-  this.stochRSI = ((this.rsi - this.lowestRSI) / (this.highestRSI - this.lowestRSI)) * 100;
+  // There is a 10% chance it is smaller than 0.1
+  this.toUpdate = this.randomNumber < 0.1;
 }
 
-// for debugging purposes log the last 
-// calculated parameters.
-method.log = function (candle)
-{
-  var digits = 8;
-
+// For debugging purposes.
+strat.log = function() {
+  log.debug('calculated random number:');
+  log.debug('\t', this.randomNumber.toFixed(3));
 }
 
-method.check = function (candle)
-{
-  const buyat =1.011; // amount of percentage of difference required
-  const sellat = 0.57; // amount of percentage of difference required
-  const stop_loss_pct = 0.98; // amount of stop loss percentage
-  const sellat_up = 1.01; // amount of percentage from last buy if market goes up
+// Based on the newly calculated
+// information, check if we should
+// update or not.
+strat.check = function() {
 
-  //RSI-------------
-  var rsi = this.indicators.rsi;
-  var rsiVal = rsi.result;
+  // Only continue if we have a new update.
+  if(!this.toUpdate)
+    return;
 
-  if (rsiVal > this.settings.thresholds.high)
-  {
+  if(this.currentTrend === 'long') {
 
-    // new trend detected
-    if (this.trend.direction !== 'high')
-      this.trend = {
-        duration: 0,
-        persisted: false,
-        direction: 'high',
-        adviced: false
-      };
+    // If it was long, set it to short
+    this.currentTrend = 'short';
+    this.advice('short');
 
-    this.trend.duration++;
+  } else {
 
-    log.debug('In high since', this.trend.duration, 'candle(s)');
+    // If it was short, set it to long
+    this.currentTrend = 'long';
+    this.advice('long');
 
-    if (this.trend.duration >= this.settings.thresholds.persistence)
-      this.trend.persisted = true;
-
-    if (this.trend.persisted && !this.trend.adviced)
-    {
-      this.trend.adviced = true;
-      this.RsiAdvice = 'bullish';
-    }
-  }
-  else if (rsiVal < this.settings.thresholds.low)
-  {
-
-    // new trend detected
-    if (this.trend.direction !== 'low')
-      this.trend = {
-        duration: 0,
-        persisted: false,
-        direction: 'low',
-        adviced: false
-      };
-
-    this.trend.duration++;
-
-    log.debug('In low since', this.trend.duration, 'candle(s)');
-
-    if (this.trend.duration >= this.settings.thresholds.persistence)
-      this.trend.persisted = true;
-
-    if (this.trend.persisted && !this.trend.adviced)
-    {
-      this.trend.adviced = true;
-      this.RsiAdvice = 'bearish';
-    }
-  }
-
-  //------------RSI END -------------
-  if (this.previousAction === "buy")
-  {
-    // calculate the minimum price in order to sell
-    const threshold = this.previousActionPrice * buyat;
-
-    // calculate the stop loss price in order to sell
-    const stop_loss = this.previousActionPrice * stop_loss_pct;
-
-    // stop loss 
-    if ((candle.close < stop_loss && this.trend.direction === 'low'))
-    {
-      this.advice('short');
-      this.previousAction = 'sell';
-      this.previousActionPrice = candle.close;
-      log.debug('STOP LOSE -->' + this.previousActionPrice);
-      this.isDownTrended = true;
-      this.downTrendPrice = this.previousActionPrice;
-
-    } else
-      if ((candle.close > threshold && this.RsiAdvice === 'bullish' ))
-    {
-        this.advice('short');
-        this.previousAction = 'sell';
-        this.previousActionPrice = candle.close;
-        log.debug('SELL AT HIGH LOSE');
-
-    }
-  }
-
-  else if (this.previousAction === "sell")
-  {
-    // calculate the minimum price in order to buy
-    const threshold = this.previousActionPrice * sellat;
-
-    // calculate the price at which we should buy again if market goes up
-    const sellat_up_price = this.previousActionPrice * sellat_up;
-
-    // we buy if the price is less than the required threshold or greater than Market Up threshold
-    if (this.RsiAdvice !== 'bullish' && !this.isDownTrended)
-    {
-
-      this.advice('long');
-      this.previousAction = 'buy';
-      this.previousActionPrice = candle.close;
-      this.boughtAt = this.previousActionPrice;
-    } else
-      if (this.isDownTrended && this.downTrendPrice < (candle.close - (this.downTrendPrice * 0.025)) ) // prevent double input in downtrend and only input in breakout
-      {
-        log.debug('DOWNTREND OVER  -->' + (candle.close + (this.downTrendPrice * 0.025)) + "<--->" + this.RsiAdvice   );
-
-        this.isDownTrended = false;
-        this.downTrendPrice = 1000000;
-        this.advice('long');
-        this.previousAction = 'buy';
-        this.previousActionPrice = candle.close;
-        this.boughtAt = this.previousActionPrice;
-      } else
-
-        if (this.isDownTrended && this.RsiAdvice == 'bullish' && this.downTrendPrice - (this.downTrendPrice * 0.055) > (candle.close )) // possible breakout
-      {
-          this.isDownTrended = false;
-          this.downTrendPrice = 1000000;
-          this.advice('long');
-          this.previousAction = 'buy';
-          this.previousActionPrice = candle.close;
-          this.boughtAt = this.previousActionPrice;
-
-      }
   }
 }
 
-module.exports = method;
+module.exports = strat;

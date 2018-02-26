@@ -1,8 +1,8 @@
-﻿// required indicators
+// required indicators
 var SMMA = require('./SMMA.js');
 
-var Indicator = function (settings)
-{
+var Indicator = function (settings) {
+  this.input = 'candle';
   this.lastClose = null;
   this.weight = settings.interval;
   this.avgU = new SMMA(this.weight);
@@ -14,12 +14,10 @@ var Indicator = function (settings)
   this.age = 0;
 }
 
-Indicator.prototype.update = function (candle)
-{
+Indicator.prototype.update = function (candle) {
   var currentClose = candle.close;
 
-  if (this.lastClose === null)
-  {
+  if (this.lastClose === null) {
     // Set initial price to prevent invalid change calculation
     this.lastClose = currentClose;
 
@@ -28,12 +26,10 @@ Indicator.prototype.update = function (candle)
     return;
   }
 
-  if (currentClose > this.lastClose)
-  {
+  if (currentClose > this.lastClose) {
     this.u = currentClose - this.lastClose;
     this.d = 0;
-  } else
-  {
+  } else {
     this.u = 0;
     this.d = this.lastClose - currentClose;
   }
@@ -44,11 +40,9 @@ Indicator.prototype.update = function (candle)
   this.rs = this.avgU.result / this.avgD.result;
   this.result = 100 - (100 / (1 + this.rs));
 
-  if (this.avgD.result === 0 && this.avgU.result !== 0)
-  {
+  if (this.avgD.result === 0 && this.avgU.result !== 0) {
     this.result = 100;
-  } else if (this.avgD.result === 0)
-  {
+  } else if (this.avgD.result === 0) {
     this.result = 0;
   }
 

@@ -1,11 +1,6 @@
-﻿
-interval = 4
-short = 7
-long = 16
+interval = 14
 
 [thresholds]
-low = 20
-high = 75
+low = 30
+high = 70
 persistence = 1
-down = -1.2
-up = 1.2

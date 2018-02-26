@@ -1,146 +1,324 @@
-/*
+﻿/*
 
-  PPO - cykedev 15/01/2014
+
+
+  RSI - cykedev 14/02/2014
+
+
 
   (updated a couple of times since, check git history)
+
+
 
  */
 
 // helpers
+
 var _ = require('lodash');
-var log = require('../core/log');
+
+var log = require('../core/log.js');
+
+
+
+var RSI = require('./indicators/RSI.js');
+
+
+
+var VWAP = require('technicalindicators').VWAP;
+
+
+
+var bullish = require('technicalindicators').bullish;
+
+var isBullishPattern = null;
+
+var isVwampBelow = null;
+
+
+
+var openArray = new Array();
+
+var closeArray = new Array();
+
+var highArray = new Array();
+
+var lowArray = new Array();
+
+var volumeArray = new Array();
+
+
+
+var period = 10;
+
+var currentPeriod = 0;
+
+
 
 // let's create our own method
+
 var method = {};
 
+
+
 // prepare everything our method needs
-method.init = function() {
+
+method.init = function ()
+{
+
+  this.name = 'RSI';
+
+
+
   this.trend = {
-   direction: 'none',
-   duration: 0,
-   persisted: false,
-   adviced: false
+
+    direction: 'none',
+
+    duration: 0,
+
+    persisted: false,
+
+    adviced: false
+
   };
+
+
 
   this.requiredHistory = this.tradingAdvisor.historySize;
 
+
+
   // define the indicators we need
-  this.addIndicator('ppo', 'PPO', this.settings);
+
+  this.addIndicator('rsi', 'RSI', this.settings);
+
 }
 
-// what happens on every new candle?
-method.update = function(candle) {
-  // nothing!
-}
+
 
 // for debugging purposes log the last
-// calculated parameters.
-method.log = function() {
-  var digits = 8;
-  var ppo = this.indicators.ppo;
-  var short = ppo.short.result;
-  var long = ppo.long.result;
-  var macd = ppo.macd;
-  var result = ppo.ppo;
-  var macdSignal = ppo.MACDsignal.result;
-  var ppoSignal = ppo.PPOsignal.result;
 
-  log.debug('calculated MACD properties for candle:');
-  log.debug('\t', 'short:', short.toFixed(digits));
-  log.debug('\t', 'long:', long.toFixed(digits));
-  log.debug('\t', 'macd:', macd.toFixed(digits));
-  log.debug('\t', 'macdsignal:', macdSignal.toFixed(digits));
-  log.debug('\t', 'machist:', (macd - macdSignal).toFixed(digits));
-  log.debug('\t', 'ppo:', result.toFixed(digits));
-  log.debug('\t', 'pposignal:', ppoSignal.toFixed(digits));
-  log.debug('\t', 'ppohist:', (result - ppoSignal).toFixed(digits));
+// calculated parameters.
+
+method.log = function (candle)
+{
+
+  var digits = 8;
+
+  var rsi = this.indicators.rsi;
+
+
+
 }
 
-method.check = function(candle) {
-  var price = candle.close;
 
-  var ppo = this.indicators.ppo;
-  var long = ppo.long.result;
-  var short = ppo.short.result;
-  var macd = ppo.macd;
-  var result = ppo.ppo;
-  var macdSignal = ppo.MACDsignal.result;
-  var ppoSignal = ppo.PPOsignal.result;
 
-  // TODO: is this part of the indicator or not?
-  // if it is it should move there
-  var ppoHist = result - ppoSignal;
+method.check = function (candle)
+{
 
-  if(ppoHist > this.settings.thresholds.up) {
+  var rsi = this.indicators.rsi;
+
+  var rsiVal = rsi.result;
+
+
+
+
+
+  if (currentPeriod == period)
+{
+
+    openArray.push(candle.open);
+
+    lowArray.push(candle.low);
+
+    highArray.push(candle.high);
+
+    closeArray.push(candle.close);
+
+    volumeArray.push(candle.volume);
+
+
+
+    if (openArray.length > 0)
+{
+
+      var twoDayBullishInput = {
+
+        open: openArray,
+
+        high: highArray,
+
+        close: closeArray,
+
+        low: lowArray
+
+      }
+
+
+
+      isBullishPattern = bullish(twoDayBullishInput);
+
+
+
+      //VAMP
+
+
+
+      var vwampArr = {
+
+        open: openArray,
+
+        high: highArray,
+
+        close: closeArray,
+
+        low: lowArray,
+
+        volume: volumeArray
+
+      }
+
+
+
+      var vwap = new VWAP(vwampArr);
+
+
+
+      isVwampBelow = vwap.result[vwap.result.length - 1] > (candle.close);
+
+
+
+      log.debug(candle.close + '<-- ' + isBullishPattern + '-->' + JSON.stringify(vwap.result[vwap.result.length - 1]) + "<-- VAMP BELOW-->" + isVwampBelow);
+
+    }
+
+
+
+
+
+    currentPeriod = 0;
+
+  }
+
+
+
+
+
+  currentPeriod++;
+
+
+
+
+
+  if (rsiVal > this.settings.thresholds.high)
+{
+
+
 
     // new trend detected
-    if(this.trend.direction !== 'up')
+
+    if (this.trend.direction !== 'high')
+
       this.trend = {
+
         duration: 0,
+
         persisted: false,
-        direction: 'up',
+
+        direction: 'high',
+
         adviced: false
+
       };
+
+
 
     this.trend.duration++;
 
-    log.debug('In uptrend since', this.trend.duration, 'candle(s)');
 
-    if(this.trend.duration >= this.settings.thresholds.persistence)
+
+
+
+    if (this.trend.duration >= this.settings.thresholds.persistence)
+
       this.trend.persisted = true;
 
-    if(this.trend.persisted && !this.trend.adviced) {
+
+
+    if (this.trend.persisted && !this.trend.adviced && !isBullishPattern && isVwampBelow)
+{
+
       this.trend.adviced = true;
-      this.advice('long');
-    } else
-      this.advice();
 
-  } else if(ppoHist < this.settings.thresholds.down) {
-
-    // new trend detected
-    if(this.trend.direction !== 'down')
-      this.trend = {
-        duration: 0,
-        persisted: false,
-        direction: 'down',
-        adviced: false
-      };
-
-    this.trend.duration++;
-
-    log.debug('In downtrend since', this.trend.duration, 'candle(s)');
-
-    if(this.trend.duration >= this.settings.thresholds.persistence)
-      this.trend.persisted = true;
-
-    if(this.trend.persisted && !this.trend.adviced) {
-      this.trend.adviced = true;
       this.advice('short');
+
     } else
+
       this.advice();
 
 
-  } else {
 
-    log.debug('In no trend');
+  } else if (rsiVal < this.settings.thresholds.low)
+{
 
-    // we're not in an up nor in a downtrend
-    // but for now we ignore sideways trends
-    //
-    // read more @link:
-    //
-    // https://github.com/askmike/gekko/issues/171
 
-    // this.trend = {
-    //   direction: 'none',
-    //   duration: 0,
-    //   persisted: false,
-    //   adviced: false
-    // };
+
+    // new trend detected
+
+    if (this.trend.direction !== 'low')
+
+      this.trend = {
+
+        duration: 0,
+
+        persisted: false,
+
+        direction: 'low',
+
+        adviced: false
+
+      };
+
+
+
+    this.trend.duration++;
+
+
+
+
+
+    if (this.trend.duration >= this.settings.thresholds.persistence)
+
+      this.trend.persisted = true;
+
+
+
+    if (this.trend.persisted && !this.trend.adviced && isBullishPattern && isVwampBelow)
+{
+
+      this.trend.adviced = true;
+
+      this.advice('long');
+
+    } else
+
+      this.advice();
+
+
+
+  } else
+{
+
+
+
+
 
     this.advice();
+
   }
 
 }
 
+
+
 module.exports = method;
+

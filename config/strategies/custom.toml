@@ -1,6 +1,1 @@
-﻿
-interval=4
-[thresholds]
-low = 24
-high = 75
-persistence = 3
+my_custom_setting = 10
