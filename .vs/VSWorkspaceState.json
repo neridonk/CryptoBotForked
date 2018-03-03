@@ -1,12 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\config",
-    "\\config\\strategies",
-    "\\strategies",
-    "\\strategies\\indicators",
-    "\\web"
+    "\\web",
+    "\\web\\vue"
   ],
-  "SelectedNode": "\\strategies\\RSI.js",
+  "SelectedNode": "\\web\\vue\\package.json",
   "PreviewInSolutionExplorer": false
 }
