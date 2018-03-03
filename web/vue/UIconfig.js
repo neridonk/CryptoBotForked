@@ -8,17 +8,19 @@ const CONFIG = {
   api: {
     host: '127.0.0.1',
     port: 3000,
+    timeout: 120000 // 2 minutes
   },
   ui: {
     ssl: true,
     host: 'v22017105055054583.bestsrv.de',
-    port: 80,
+    port: 443,
     path: '/'
   },
   adapter: 'sqlite'
 }
 
-if(typeof window === 'undefined')
+if (typeof window === 'undefined')
   module.exports = CONFIG;
 else
   window.CONFIG = CONFIG;
+

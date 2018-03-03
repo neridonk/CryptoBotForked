@@ -80,9 +80,6 @@ var Base = function(settings) {
   if(!this.end)
     this.end = function() {};
 
-  if(!this.onTrade)
-    this.onTrade = function() {};
-
   // let's run the implemented starting point
   this.init();
 
@@ -226,17 +223,10 @@ Base.prototype.propogateTick = function(candle) {
   // than minimally needed. In that case check
   // whether candle start time is > startTime
   var isPremature;
-
-  if(mode === 'realtime'){
-    // Subtract number of minutes in current candle for instant start
-    let startTimeMinusCandleSize = startTime.clone();
-    startTimeMinusCandleSize.subtract(this.tradingAdvisor.candleSize, "minutes"); 
-    
-    isPremature = candle.start < startTimeMinusCandleSize;
-  }
-  else{
+  if(mode === 'realtime')
+    isPremature = candle.start < startTime;
+  else
     isPremature = false;
-  }
 
   if(isAllowedToCheck && !isPremature) {
     this.log(candle);
@@ -256,10 +246,6 @@ Base.prototype.propogateTick = function(candle) {
   var done = this.age === this.processedTicks;
   if(done && this.finishCb)
     this.finishCb();
-}
-
-Base.prototype.processTrade = function(trade) {
-  this.onTrade(trade);
 }
 
 Base.prototype.addTalibIndicator = function(name, type, parameters) {
@@ -305,7 +291,7 @@ Base.prototype.addIndicator = function(name, type, parameters) {
   if(this.setup)
     util.die('Can only add indicators in the init method!');
 
-  return this.indicators[name] = new Indicators[type](parameters);
+  this.indicators[name] = new Indicators[type](parameters);
 
   // some indicators need a price stream, others need full candles
 }
@@ -328,11 +314,13 @@ Base.prototype.advice = function(newPosition, _candle) {
 
   this._prevAdvice = newPosition;
 
-  this.emit('advice', {
-    recommendation: newPosition,
-    portfolio: 1,
-    candle
-  });
+  _.defer(function() {
+    this.emit('advice', {
+      recommendation: newPosition,
+      portfolio: 1,
+      candle
+    });
+  }.bind(this));
 }
 
 // Because the trading method might be async we need

@@ -2,7 +2,6 @@ const moment = require('moment');
 const util = require('../core/util');
 const _ = require('lodash');
 const log = require('../core/log');
-const marketData = require('./coinfalcon-markets.json');
 
 const CoinFalcon = require('coinfalcon');
 
@@ -237,9 +236,18 @@ Trader.getCapabilities = function () {
   return {
     name: 'CoinFalcon',
     slug: 'coinfalcon',
-    assets: marketData.assets,
-    currencies: marketData.currencies,
-    markets: marketData.markets,
+    currencies: ['EUR', 'BTC'],
+    assets: ['BTC', 'LTC', 'ETH', 'IOT', 'BCH'],
+    markets: [
+      // Euro pairs
+      { pair: ['EUR', 'BTC'], minimalOrder: { amount: 0.0, unit: 'asset' } },
+      { pair: ['EUR', 'ETH'], minimalOrder: { amount: 0.0, unit: 'asset' } },
+      // Bitcoin pairs
+      { pair: ['BTC', 'ETH'], minimalOrder: { amount: 0.0, unit: 'asset' } },
+      { pair: ['BTC', 'LTC'], minimalOrder: { amount: 0.0, unit: 'asset' } },
+      { pair: ['BTC', 'IOT'], minimalOrder: { amount: 0.0, unit: 'asset' } },
+      { pair: ['BTC', 'BCH'], minimalOrder: { amount: 0.0, unit: 'asset' } }
+    ],
     requires: ['key', 'secret'],
     providesHistory: 'date',
     providesFullHistory: true,

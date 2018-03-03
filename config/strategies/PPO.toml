@@ -1,6 +1,8 @@
-﻿interval = 14
+short = 12
+long = 26
+signal = 9
 
 [thresholds]
-low = 30
-high = 70
-persistence = 1
+down = -0.025
+up = 0.025
+persistence = 2
