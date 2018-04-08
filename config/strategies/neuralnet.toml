@@ -1,0 +1,13 @@
+
+threshold_buy=1 
+threshold_sell=0 
+learning_rate=2.01 
+price_buffer_len=104 
+min_predictions=1000
+
+interval = 14
+
+[thresholds]
+low = 30
+high = 70
+
