@@ -98,7 +98,7 @@ PaperTrader.prototype.updatePosition = function (advice) {
    
     if (boughtAt != 0) {
       win = ((1 - (boughtAt / price)) * 100);
-      transfer.addData(what, price, watchConfig.asset + watchConfig.currency, this.portfolio.balance);
+      transfer.addData(what, price, watchConfig.asset + watchConfig.currency, win);
     }
 
     this.trades++;
