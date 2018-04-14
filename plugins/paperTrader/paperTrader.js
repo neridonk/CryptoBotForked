@@ -2,12 +2,21 @@ const _ = require('lodash');
 
 const util = require('../../core/util');
 const ENV = util.gekkoEnv();
+const log = require('../../core/log');
 
 const config = util.getConfig();
 const calcConfig = config.paperTrader;
 const watchConfig = config.watch;
+const transfer = require('./services/transfer');
 
-const PaperTrader = function() {
+var startBalance = 1000;
+var boughtAt = 0;
+
+config.performanceAnalyzer = {
+  enabled: true,
+  riskFreeReturn: 5
+}
+const PaperTrader = function () {
   _.bindAll(this);
 
   this.fee = 1 - (calcConfig['fee' + calcConfig.feeUsing.charAt(0).toUpperCase() + calcConfig.feeUsing.slice(1)] + calcConfig.slippage) / 100;
@@ -25,15 +34,15 @@ const PaperTrader = function() {
 // teach our paper trader events
 util.makeEventEmitter(PaperTrader);
 
-PaperTrader.prototype.relayTrade = function(advice) {
+PaperTrader.prototype.relayTrade = function (advice) {
   var what = advice.recommendation;
   var price = advice.candle.close;
   var at = advice.candle.start;
 
   let action;
-  if(what === 'short')
+  if (what === 'short')
     action = 'sell';
-  else if(what === 'long')
+  else if (what === 'long')
     action = 'buy';
   else
     return;
@@ -47,11 +56,11 @@ PaperTrader.prototype.relayTrade = function(advice) {
   });
 }
 
-PaperTrader.prototype.relayPortfolio = function() {
+PaperTrader.prototype.relayPortfolio = function () {
   this.emit('portfolioUpdate', _.clone(this.portfolio));
 }
 
-PaperTrader.prototype.extractFee = function(amount) {
+PaperTrader.prototype.extractFee = function (amount) {
   amount *= 1e8;
   amount *= this.fee;
   amount = Math.floor(amount);
@@ -59,7 +68,7 @@ PaperTrader.prototype.extractFee = function(amount) {
   return amount;
 }
 
-PaperTrader.prototype.setStartBalance = function() {
+PaperTrader.prototype.setStartBalance = function () {
   this.portfolio.balance = this.portfolio.currency + this.price * this.portfolio.asset;
   this.relayPortfolio();
 }
@@ -67,39 +76,47 @@ PaperTrader.prototype.setStartBalance = function() {
 // after every succesfull trend ride we hopefully end up
 // with more BTC than we started with, this function
 // calculates Gekko's profit in %.
-PaperTrader.prototype.updatePosition = function(advice) {
+PaperTrader.prototype.updatePosition = function (advice) {
   let what = advice.recommendation;
   let price = advice.candle.close;
-
+  let win = 0;
   // virtually trade all {currency} to {asset}
   // at the current price (minus fees)
-  if(what === 'long') {
+  if (what === 'long') {
     this.portfolio.asset += this.extractFee(this.portfolio.currency / price);
     this.portfolio.currency = 0;
+    boughtAt = price;
     this.trades++;
   }
 
   // virtually trade all {currency} to {asset}
   // at the current price (minus fees)
-  else if(what === 'short') {
+  else if (what === 'short') {
     this.portfolio.currency += this.extractFee(this.portfolio.asset * price);
     this.portfolio.asset = 0;
+
+   
+    if (boughtAt != 0) {
+      win = ((1 - (boughtAt / price)) * 100);
+      transfer.addData(what, price, watchConfig.asset + watchConfig.currency, this.portfolio.balance);
+    }
+
     this.trades++;
   }
 }
 
-PaperTrader.prototype.processAdvice = function(advice) {
-  if(advice.recommendation === 'soft')
+PaperTrader.prototype.processAdvice = function (advice) {
+  if (advice.recommendation === 'soft')
     return;
 
   this.updatePosition(advice);
   this.relayTrade(advice);
 }
 
-PaperTrader.prototype.processCandle = function(candle, done) {
+PaperTrader.prototype.processCandle = function (candle, done) {
   this.price = candle.close;
 
-  if(!this.portfolio.balance)
+  if (!this.portfolio.balance)
     this.setStartBalance();
 
   done();

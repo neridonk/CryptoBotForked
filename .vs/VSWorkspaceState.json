@@ -1,9 +1,16 @@
 {
   "ExpandedNodes": [
     "",
+    "\\config",
+    "\\core",
+    "\\core\\tools",
+    "\\plugins",
+    "\\plugins\\paperTrader",
+    "\\plugins\\paperTrader\\services",
     "\\web",
-    "\\web\\vue"
+    "\\web\\vue",
+    "\\web\\vue\\src"
   ],
-  "SelectedNode": "\\web\\vue\\package.json",
+  "SelectedNode": "\\plugins\\paperTrader\\paperTrader.js",
   "PreviewInSolutionExplorer": false
 }
