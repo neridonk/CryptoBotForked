@@ -7,13 +7,13 @@ const CONFIG = {
   headless: true,
   api: {
     host: '127.0.0.1',
-    port: 8080,
+    port: 3000,
     timeout: 120000 // 2 minutes
   },
   ui: {
     ssl: false,
         host: 'http://gekko-gekko.1d35.starter-us-east-1.openshiftapps.com', // Set this to the IP of the machine that will run Gekko
-        port: 8080,
+        port: 3000,
         path: '/'
   },
   adapter: 'sqlite'
