@@ -11,8 +11,8 @@ const CONFIG = {
     timeout: 120000 // 2 minutes
   },
   ui: {
-    ssl: false,
-        host: 'gekko-gekko.1d35.starter-us-east-1.openshiftapps.com ', // Set this to the IP of the machine that will run Gekko
+    ssl: true,
+        host: 'https://roader.herokuapp.com', // Set this to the IP of the machine that will run Gekko
         port: 8080,
         path: '/'
   },
